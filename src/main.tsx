@@ -5,15 +5,15 @@ import Admin from './Admin.tsx';
 import './index.css';
 
 function Root() {
-  const [route, setRoute] = useState(window.location.hash);
+  const [path, setPath] = useState(window.location.pathname);
 
   useEffect(() => {
-    const onHash = () => setRoute(window.location.hash);
-    window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
+    const onPop = () => setPath(window.location.pathname);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
   }, []);
 
-  if (route === '#/admin') return <Admin />;
+  if (path === '/admin') return <Admin />;
   return <App />;
 }
 

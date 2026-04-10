@@ -98,7 +98,7 @@ export default function Admin() {
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => { window.location.hash = ''; }}
+              onClick={() => { window.history.pushState({}, '', '/'); window.dispatchEvent(new PopStateEvent('popstate')); }}
               className="p-2 rounded-lg hover:bg-white/5 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-on-surface-variant" />
