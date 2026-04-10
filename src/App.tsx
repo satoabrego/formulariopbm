@@ -163,9 +163,7 @@ function TopBar({ step }: { step: number }) {
           <button className="active:scale-95 duration-200 hover:bg-[#23252f] transition-colors p-2 rounded-full">
             <ArrowLeft className="text-[#F05A22] w-6 h-6" />
           </button>
-          <h1 className="font-headline font-extrabold tracking-tight text-white text-lg md:text-xl">
-            Encuesta de Satisfacción Publimovil LATAM
-          </h1>
+          <img src="/static/images/logo.png" alt="Publimovil LATAM" className="h-8 md:h-10 object-contain" />
         </div>
         <div className="hidden md:flex items-center gap-6">
           {step < 8 ? (
