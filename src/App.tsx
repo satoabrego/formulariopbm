@@ -148,7 +148,7 @@ export default function App() {
         </div>
       </main>
 
-      {step < 8 && <BottomBar step={step} onNext={nextStep} onPrev={prevStep} />}
+      {step > 1 && step < 8 && <BottomBar step={step} onNext={nextStep} onPrev={prevStep} />}
     </div>
   );
 }
@@ -513,25 +513,20 @@ function Step4({ form, updateForm }: { form: FormData; updateForm: (f: Partial<F
           <h3 className="text-xl md:text-2xl font-headline font-bold text-white mb-8">
             ¿Qué impacto percibiste en tu marca?
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {['Mayor reconocimiento', 'Más tráfico', 'Incremento en ventas', 'Mejor posicionamiento', 'No percibí impacto'].map((opt, i) => (
-              <label key={i} className="relative flex items-center p-4 bg-surface-container-low hover:bg-surface-container-highest border border-outline-variant/10 rounded-lg cursor-pointer transition-all active:scale-[0.98] group">
-                <input type="checkbox" className="hidden peer" checked={form.impactoMarca.includes(opt)} onChange={() => toggleImpacto(opt)} />
-                <div className="flex items-center gap-4 w-full">
-                  <div className="w-6 h-6 border-2 border-outline rounded flex items-center justify-center peer-checked:bg-primary peer-checked:border-primary transition-colors">
-                    <Check className="text-white w-4 h-4 opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  <span className="text-on-surface font-medium">{opt}</span>
+              <label key={i} className="group relative flex items-center p-4 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-highest transition-all duration-300 border border-transparent hover:border-primary-dim/30">
+                <input type="checkbox" className="peer hidden" checked={form.impactoMarca.includes(opt)} onChange={() => toggleImpacto(opt)} />
+                <span className="flex-grow font-semibold text-on-surface group-hover:text-primary transition-colors">{opt}</span>
+                <div className="w-6 h-6 border-2 border-outline-variant rounded-md peer-checked:bg-primary peer-checked:border-primary flex items-center justify-center transition-all">
+                  <Check className="text-on-primary w-4 h-4 font-bold scale-0 peer-checked:scale-100 transition-transform" />
                 </div>
-                <div className="absolute inset-0 border-2 border-primary/0 peer-checked:border-primary/40 rounded-lg pointer-events-none"></div>
               </label>
             ))}
-            <div className="relative flex flex-col gap-2 p-4 bg-surface-container-low border border-outline-variant/10 rounded-lg group">
-              <div className="flex items-center gap-4 w-full">
-                <span className="text-on-surface font-medium">Otro</span>
-              </div>
+            <label className="group relative flex flex-col gap-2 p-4 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-highest transition-all duration-300 border border-transparent hover:border-primary-dim/30">
+              <span className="font-semibold text-on-surface group-hover:text-primary transition-colors">Otro</span>
               <input type="text" placeholder="Especifique aquí..." value={form.impactoOtro} onChange={(e) => updateForm({ impactoOtro: e.target.value })} className="w-full bg-surface-container-lowest border-none rounded p-2 text-sm text-on-surface focus:ring-1 focus:ring-primary outline-none transition-all" />
-            </div>
+            </label>
           </div>
         </div>
       </div>
