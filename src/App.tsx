@@ -26,15 +26,99 @@ import {
   CheckCircle,
   Mail,
   Smartphone,
-  Check
+  Check,
+  Loader2
 } from 'lucide-react';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from './firebase';
+
+export interface FormData {
+  // Step 1
+  nombre: string;
+  empresa: string;
+  pais: string;
+  ejecutivo: string;
+  // Step 2
+  tipoCampana: string[];
+  nps: number | null;
+  npsPorQue: string;
+  // Step 3
+  atencionEjecutivo: number | null;
+  tiemposRespuesta: number | null;
+  claridadInformacion: number | null;
+  ejecucionCampana: number | null;
+  calidadFormatos: number | null;
+  // Step 4
+  efectividadCampana: number | null;
+  impactoMarca: string[];
+  impactoOtro: string;
+  // Step 5
+  cumplimientoPlazos: string;
+  dentroPresupuesto: string;
+  rePautar: string;
+  // Step 6
+  formatosFuturos: string[];
+  mejoras: string;
+  // Step 7
+  contactoAsesor: string;
+  // Step 8
+  email: string;
+  telefono: string;
+}
+
+const initialFormData: FormData = {
+  nombre: '',
+  empresa: '',
+  pais: '',
+  ejecutivo: '',
+  tipoCampana: [],
+  nps: null,
+  npsPorQue: '',
+  atencionEjecutivo: null,
+  tiemposRespuesta: null,
+  claridadInformacion: null,
+  ejecucionCampana: null,
+  calidadFormatos: null,
+  efectividadCampana: null,
+  impactoMarca: [],
+  impactoOtro: '',
+  cumplimientoPlazos: '',
+  dentroPresupuesto: '',
+  rePautar: '',
+  formatosFuturos: [],
+  mejoras: '',
+  contactoAsesor: '',
+  email: '',
+  telefono: '',
+};
 
 export default function App() {
   const [step, setStep] = useState(1);
+  const [form, setForm] = useState<FormData>(initialFormData);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const totalSteps = 8;
+
+  const updateForm = (fields: Partial<FormData>) => setForm((prev) => ({ ...prev, ...fields }));
 
   const nextStep = () => setStep((s) => Math.min(totalSteps, s + 1));
   const prevStep = () => setStep((s) => Math.max(1, s - 1));
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    try {
+      await addDoc(collection(db, 'pbmlatam'), {
+        ...form,
+        createdAt: serverTimestamp(),
+      });
+      setSubmitted(true);
+    } catch (err) {
+      console.error('Error al guardar encuesta:', err);
+      alert('Hubo un error al enviar la encuesta. Intenta de nuevo.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="h-[100dvh] flex flex-col font-body selection:bg-primary-container/30 overflow-hidden bg-[#0c0e15]">
@@ -51,14 +135,14 @@ export default function App() {
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
               className="h-full"
             >
-              {step === 1 && <Step1 onNext={nextStep} />}
-              {step === 2 && <Step2 />}
-              {step === 3 && <Step3 />}
-              {step === 4 && <Step4 />}
-              {step === 5 && <Step5 />}
-              {step === 6 && <Step6 />}
-              {step === 7 && <Step7 />}
-              {step === 8 && <Step8 />}
+              {step === 1 && <Step1 onNext={nextStep} form={form} updateForm={updateForm} />}
+              {step === 2 && <Step2 form={form} updateForm={updateForm} />}
+              {step === 3 && <Step3 form={form} updateForm={updateForm} />}
+              {step === 4 && <Step4 form={form} updateForm={updateForm} />}
+              {step === 5 && <Step5 form={form} updateForm={updateForm} />}
+              {step === 6 && <Step6 form={form} updateForm={updateForm} />}
+              {step === 7 && <Step7 form={form} updateForm={updateForm} />}
+              {step === 8 && <Step8 form={form} updateForm={updateForm} onSubmit={handleSubmit} submitting={submitting} submitted={submitted} />}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -141,7 +225,7 @@ function BottomBar({ step, onNext, onPrev }: { step: number, onNext: () => void,
 
 // --- Steps ---
 
-function Step1({ onNext }: { onNext: () => void }) {
+function Step1({ onNext, form, updateForm }: { onNext: () => void; form: FormData; updateForm: (f: Partial<FormData>) => void }) {
   return (
     <div className="flex flex-col gap-8 mb-12">
       <div className="flex flex-col md:flex-row gap-8 items-start">
@@ -181,20 +265,20 @@ function Step1({ onNext }: { onNext: () => void }) {
             <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1 transition-colors group-focus-within/field:text-primary">
               Nombre <span className="text-on-tertiary-fixed-variant italic lowercase font-normal">(Opcional)</span>
             </label>
-            <input type="text" placeholder="Tu nombre completo" className="w-full bg-surface-container-lowest border border-transparent outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-xl py-4 px-5 text-on-surface transition-all duration-300 placeholder:text-outline/40 hover:bg-surface-container-lowest/80" />
+            <input type="text" placeholder="Tu nombre completo" value={form.nombre} onChange={(e) => updateForm({ nombre: e.target.value })} className="w-full bg-surface-container-lowest border border-transparent outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-xl py-4 px-5 text-on-surface transition-all duration-300 placeholder:text-outline/40 hover:bg-surface-container-lowest/80" />
           </div>
           <div className="space-y-2 group/field">
             <label className="block text-[10px] font-bold uppercase tracking-widest text-[#F05A22] ml-1 transition-colors group-focus-within/field:text-primary">
               Empresa <span className="text-error text-xs">*</span>
             </label>
-            <input type="text" required placeholder="Nombre de la compañía" className="w-full bg-surface-container-lowest border border-transparent outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-xl py-4 px-5 text-on-surface transition-all duration-300 placeholder:text-outline/40 hover:bg-surface-container-lowest/80" />
+            <input type="text" required placeholder="Nombre de la compañía" value={form.empresa} onChange={(e) => updateForm({ empresa: e.target.value })} className="w-full bg-surface-container-lowest border border-transparent outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-xl py-4 px-5 text-on-surface transition-all duration-300 placeholder:text-outline/40 hover:bg-surface-container-lowest/80" />
           </div>
           <div className="space-y-2 group/field">
             <label className="block text-[10px] font-bold uppercase tracking-widest text-[#F05A22] ml-1 transition-colors group-focus-within/field:text-primary">
               País <span className="text-error text-xs">*</span>
             </label>
             <div className="relative">
-              <select required defaultValue="" className="w-full bg-surface-container-lowest border border-transparent outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-xl py-4 px-5 text-on-surface appearance-none transition-all duration-300 hover:bg-surface-container-lowest/80 cursor-pointer">
+              <select required value={form.pais} onChange={(e) => updateForm({ pais: e.target.value })} className="w-full bg-surface-container-lowest border border-transparent outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-xl py-4 px-5 text-on-surface appearance-none transition-all duration-300 hover:bg-surface-container-lowest/80 cursor-pointer">
                 <option value="" disabled>Selecciona un país</option>
                 <option>Guatemala</option>
                 <option>El Salvador</option>
@@ -211,7 +295,7 @@ function Step1({ onNext }: { onNext: () => void }) {
               Ejecutivo de Cuenta <span className="text-error text-xs">*</span>
             </label>
             <div className="relative">
-              <select required defaultValue="" className="w-full bg-surface-container-lowest border border-transparent outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-xl py-4 px-5 text-on-surface appearance-none transition-all duration-300 hover:bg-surface-container-lowest/80 cursor-pointer">
+              <select required value={form.ejecutivo} onChange={(e) => updateForm({ ejecutivo: e.target.value })} className="w-full bg-surface-container-lowest border border-transparent outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-xl py-4 px-5 text-on-surface appearance-none transition-all duration-300 hover:bg-surface-container-lowest/80 cursor-pointer">
                 <option value="" disabled>Selecciona tu ejecutivo</option>
                 <option>Ejecutivo asignado 1</option>
                 <option>Ejecutivo asignado 2</option>
@@ -235,7 +319,14 @@ function Step1({ onNext }: { onNext: () => void }) {
   );
 }
 
-function Step2() {
+function Step2({ form, updateForm }: { form: FormData; updateForm: (f: Partial<FormData>) => void }) {
+  const toggleCampana = (val: string) => {
+    const arr = form.tipoCampana.includes(val)
+      ? form.tipoCampana.filter((v) => v !== val)
+      : [...form.tipoCampana, val];
+    updateForm({ tipoCampana: arr });
+  };
+
   return (
     <div className="space-y-12">
       <div className="mb-12">
@@ -269,7 +360,7 @@ function Step2() {
             { icon: MoreHorizontal, title: 'Otro', desc: 'Otros objetivos tácticos específicos.' },
           ].map((item, i) => (
             <label key={i} className="group cursor-pointer">
-              <input type="checkbox" className="hidden peer" />
+              <input type="checkbox" className="hidden peer" checked={form.tipoCampana.includes(item.title)} onChange={() => toggleCampana(item.title)} />
               <div className="h-full p-6 bg-surface-container rounded-xl border-2 border-transparent peer-checked:border-primary peer-checked:bg-primary/5 hover:bg-surface-container-highest transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5">
                 <div className="flex flex-col gap-4">
                   <item.icon className="w-8 h-8 text-on-surface-variant group-hover:text-primary transition-colors" />
@@ -301,7 +392,7 @@ function Step2() {
             </div>
             <div className="flex gap-1.5 md:gap-2 overflow-x-auto no-scrollbar pb-4 md:pb-0 justify-start lg:justify-center">
               {[0,1,2,3,4,5,6,7,8,9,10].map((num) => (
-                <button key={num} className={`flex-shrink-0 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-lg font-bold text-lg transition-all duration-300 border border-transparent active:scale-90 ${num === 9 ? 'bg-primary text-on-primary scale-110 shadow-[0_0_20px_rgba(255,144,107,0.4)]' : 'bg-surface-container hover:bg-surface-container-highest hover:scale-105 hover:text-white text-on-surface'}`}>
+                <button key={num} type="button" onClick={() => updateForm({ nps: num })} className={`flex-shrink-0 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-lg font-bold text-lg transition-all duration-300 border border-transparent active:scale-90 ${form.nps === num ? 'bg-primary text-on-primary scale-110 shadow-[0_0_20px_rgba(255,144,107,0.4)]' : 'bg-surface-container hover:bg-surface-container-highest hover:scale-105 hover:text-white text-on-surface'}`}>
                   {num}
                 </button>
               ))}
@@ -312,20 +403,20 @@ function Step2() {
         
         <div className="space-y-4">
           <label className="block text-lg font-headline font-bold text-white">¿Por qué nos diste esa calificación?</label>
-          <textarea rows={4} placeholder="Cuéntanos más sobre tu experiencia..." className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4 text-on-surface focus:ring-4 focus:ring-primary/20 focus:border-primary/50 hover:bg-surface-container-lowest/80 transition-all duration-300 outline-none resize-none placeholder:text-outline"></textarea>
+          <textarea rows={4} placeholder="Cuéntanos más sobre tu experiencia..." value={form.npsPorQue} onChange={(e) => updateForm({ npsPorQue: e.target.value })} className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4 text-on-surface focus:ring-4 focus:ring-primary/20 focus:border-primary/50 hover:bg-surface-container-lowest/80 transition-all duration-300 outline-none resize-none placeholder:text-outline"></textarea>
         </div>
       </section>
     </div>
   );
 }
 
-function Step3() {
-  const questions = [
-    { title: 'Atención del ejecutivo', desc: 'Calidad del trato, disposición y profesionalismo del consultor asignado.', active: 9 },
-    { title: 'Tiempos de respuesta', desc: 'Agilidad en la comunicación y resolución de requerimientos.', active: 10 },
-    { title: 'Claridad de la información', desc: 'Precisión en propuestas comerciales, reportes y especificaciones técnicas.', active: 7 },
-    { title: 'Ejecución de la campaña', desc: 'Cumplimiento de plazos, ubicación de pautas y reportes de exhibición.', active: 8 },
-    { title: 'Calidad de los formatos publicitarios', desc: 'Estado físico de vallas, calidad de impresión o nitidez en pantallas digitales.', active: 9 },
+function Step3({ form, updateForm }: { form: FormData; updateForm: (f: Partial<FormData>) => void }) {
+  const questions: { title: string; desc: string; key: keyof FormData }[] = [
+    { title: 'Atención del ejecutivo', desc: 'Calidad del trato, disposición y profesionalismo del consultor asignado.', key: 'atencionEjecutivo' },
+    { title: 'Tiempos de respuesta', desc: 'Agilidad en la comunicación y resolución de requerimientos.', key: 'tiemposRespuesta' },
+    { title: 'Claridad de la información', desc: 'Precisión en propuestas comerciales, reportes y especificaciones técnicas.', key: 'claridadInformacion' },
+    { title: 'Ejecución de la campaña', desc: 'Cumplimiento de plazos, ubicación de pautas y reportes de exhibición.', key: 'ejecucionCampana' },
+    { title: 'Calidad de los formatos publicitarios', desc: 'Estado físico de vallas, calidad de impresión o nitidez en pantallas digitales.', key: 'calidadFormatos' },
   ];
 
   return (
@@ -353,7 +444,7 @@ function Step3() {
               <div className="flex flex-wrap gap-2 justify-start md:justify-end w-full md:w-auto">
                 <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-4 md:pb-0 w-full md:w-auto">
                   {[1,2,3,4,5,6,7,8,9,10].map(num => (
-                    <button key={num} className={`flex-shrink-0 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-lg font-headline font-bold text-sm transition-all duration-300 active:scale-90 ${num === q.active ? 'bg-primary text-on-primary ring-4 ring-primary/20 shadow-[inset_0_2px_4px_rgba(255,255,255,0.2)] scale-110' : 'bg-surface-container-highest text-on-surface-variant hover:bg-primary-dim hover:text-on-primary hover:scale-105'}`}>
+                    <button key={num} type="button" onClick={() => updateForm({ [q.key]: num })} className={`flex-shrink-0 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-lg font-headline font-bold text-sm transition-all duration-300 active:scale-90 ${num === (form[q.key] as number | null) ? 'bg-primary text-on-primary ring-4 ring-primary/20 shadow-[inset_0_2px_4px_rgba(255,255,255,0.2)] scale-110' : 'bg-surface-container-highest text-on-surface-variant hover:bg-primary-dim hover:text-on-primary hover:scale-105'}`}>
                       {num}
                     </button>
                   ))}
@@ -367,7 +458,14 @@ function Step3() {
   );
 }
 
-function Step4() {
+function Step4({ form, updateForm }: { form: FormData; updateForm: (f: Partial<FormData>) => void }) {
+  const toggleImpacto = (val: string) => {
+    const arr = form.impactoMarca.includes(val)
+      ? form.impactoMarca.filter((v) => v !== val)
+      : [...form.impactoMarca, val];
+    updateForm({ impactoMarca: arr });
+  };
+
   return (
     <div className="space-y-12">
       <div className="space-y-4">
@@ -389,7 +487,7 @@ function Step4() {
               <p className="text-on-surface-variant text-sm font-label">Desliza o selecciona un valor del 1 (Nula) al 10 (Excelente)</p>
             </div>
             <div className="flex items-center gap-2 bg-surface-container-highest px-4 py-2 rounded-xl">
-              <span className="text-primary font-headline font-black text-3xl">10</span>
+              <span className="text-primary font-headline font-black text-3xl">{form.efectividadCampana ?? '-'}</span>
               <span className="text-on-surface-variant text-xs uppercase font-bold tracking-tighter">Score</span>
             </div>
           </div>
@@ -397,10 +495,10 @@ function Step4() {
           <div className="mt-8 md:mt-12 group">
             <div className="relative w-full h-12 md:h-16 flex items-center">
               <div className="absolute w-full h-2 bg-surface-container-low rounded-full"></div>
-              <div className="absolute w-[90%] h-2 bg-gradient-to-r from-primary-dim to-primary rounded-full"></div>
+              <div className="absolute h-2 bg-gradient-to-r from-primary-dim to-primary rounded-full" style={{ width: `${((form.efectividadCampana ?? 0) / 10) * 100}%` }}></div>
               <div className="absolute w-full flex justify-between px-1">
                 {[...Array(10)].map((_, i) => (
-                  <div key={i} className={`w-1 h-3 md:h-4 rounded-full ${i === 9 ? 'bg-primary ring-4 ring-primary/20 scale-125' : 'bg-outline-variant/30'}`}></div>
+                  <button key={i} type="button" onClick={() => updateForm({ efectividadCampana: i + 1 })} className={`w-1 h-3 md:h-4 rounded-full cursor-pointer ${(i + 1) === form.efectividadCampana ? 'bg-primary ring-4 ring-primary/20 scale-125' : 'bg-outline-variant/30 hover:bg-primary/50'}`}></button>
                 ))}
               </div>
             </div>
@@ -418,7 +516,7 @@ function Step4() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {['Mayor reconocimiento', 'Más tráfico', 'Incremento en ventas', 'Mejor posicionamiento', 'No percibí impacto'].map((opt, i) => (
               <label key={i} className="relative flex items-center p-4 bg-surface-container-low hover:bg-surface-container-highest border border-outline-variant/10 rounded-lg cursor-pointer transition-all active:scale-[0.98] group">
-                <input type="checkbox" className="hidden peer" defaultChecked={i === 0 || i === 2} />
+                <input type="checkbox" className="hidden peer" checked={form.impactoMarca.includes(opt)} onChange={() => toggleImpacto(opt)} />
                 <div className="flex items-center gap-4 w-full">
                   <div className="w-6 h-6 border-2 border-outline rounded flex items-center justify-center peer-checked:bg-primary peer-checked:border-primary transition-colors">
                     <Check className="text-white w-4 h-4 opacity-0 peer-checked:opacity-100" />
@@ -432,7 +530,7 @@ function Step4() {
               <div className="flex items-center gap-4 w-full">
                 <span className="text-on-surface font-medium">Otro</span>
               </div>
-              <input type="text" placeholder="Especifique aquí..." className="w-full bg-surface-container-lowest border-none rounded p-2 text-sm text-on-surface focus:ring-1 focus:ring-primary outline-none transition-all" />
+              <input type="text" placeholder="Especifique aquí..." value={form.impactoOtro} onChange={(e) => updateForm({ impactoOtro: e.target.value })} className="w-full bg-surface-container-lowest border-none rounded p-2 text-sm text-on-surface focus:ring-1 focus:ring-primary outline-none transition-all" />
             </div>
           </div>
         </div>
@@ -449,7 +547,7 @@ function Step4() {
   );
 }
 
-function Step5() {
+function Step5({ form, updateForm }: { form: FormData; updateForm: (f: Partial<FormData>) => void }) {
   return (
     <div className="grid gap-8">
       <div className="mb-4 flex items-center justify-between">
@@ -473,13 +571,13 @@ function Step5() {
             <p className="text-xl font-semibold leading-snug">¿Se cumplieron los plazos acordados?</p>
             <div className="flex gap-4">
               <label className="flex-1 cursor-pointer">
-                <input type="radio" name="plazos" className="peer hidden" />
+                <input type="radio" name="plazos" className="peer hidden" checked={form.cumplimientoPlazos === 'Sí'} onChange={() => updateForm({ cumplimientoPlazos: 'Sí' })} />
                 <div className="flex items-center justify-center p-4 rounded-lg bg-surface-container-low border border-transparent peer-checked:border-primary peer-checked:bg-primary/10 transition-all text-on-surface-variant peer-checked:text-primary">
                   <span className="font-bold">Sí</span>
                 </div>
               </label>
               <label className="flex-1 cursor-pointer">
-                <input type="radio" name="plazos" className="peer hidden" />
+                <input type="radio" name="plazos" className="peer hidden" checked={form.cumplimientoPlazos === 'No'} onChange={() => updateForm({ cumplimientoPlazos: 'No' })} />
                 <div className="flex items-center justify-center p-4 rounded-lg bg-surface-container-low border border-transparent peer-checked:border-error peer-checked:bg-error/10 transition-all text-on-surface-variant peer-checked:text-error">
                   <span className="font-bold">No</span>
                 </div>
@@ -491,13 +589,13 @@ function Step5() {
             <p className="text-xl font-semibold leading-snug">¿El servicio se mantuvo dentro del presupuesto?</p>
             <div className="flex gap-4">
               <label className="flex-1 cursor-pointer">
-                <input type="radio" name="presupuesto" className="peer hidden" />
+                <input type="radio" name="presupuesto" className="peer hidden" checked={form.dentroPresupuesto === 'Sí'} onChange={() => updateForm({ dentroPresupuesto: 'Sí' })} />
                 <div className="flex items-center justify-center p-4 rounded-lg bg-surface-container-low border border-transparent peer-checked:border-primary peer-checked:bg-primary/10 transition-all text-on-surface-variant peer-checked:text-primary">
                   <span className="font-bold">Sí</span>
                 </div>
               </label>
               <label className="flex-1 cursor-pointer">
-                <input type="radio" name="presupuesto" className="peer hidden" />
+                <input type="radio" name="presupuesto" className="peer hidden" checked={form.dentroPresupuesto === 'No'} onChange={() => updateForm({ dentroPresupuesto: 'No' })} />
                 <div className="flex items-center justify-center p-4 rounded-lg bg-surface-container-low border border-transparent peer-checked:border-error peer-checked:bg-error/10 transition-all text-on-surface-variant peer-checked:text-error">
                   <span className="font-bold">No</span>
                 </div>
@@ -522,7 +620,7 @@ function Step5() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <label className="cursor-pointer">
-                <input type="radio" name="re-pautar" className="peer hidden" />
+                <input type="radio" name="re-pautar" className="peer hidden" checked={form.rePautar === 'Sí'} onChange={() => updateForm({ rePautar: 'Sí' })} />
                 <div className="h-full flex flex-col items-center justify-center gap-4 p-6 rounded-lg bg-surface-container-low border-2 border-transparent peer-checked:border-primary peer-checked:bg-primary/5 transition-all group">
                   <div className="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:scale-110 transition-transform peer-checked:bg-primary">
                     <Smile className="text-primary group-hover:text-primary transition-colors peer-checked:text-white" />
@@ -531,7 +629,7 @@ function Step5() {
                 </div>
               </label>
               <label className="cursor-pointer">
-                <input type="radio" name="re-pautar" className="peer hidden" />
+                <input type="radio" name="re-pautar" className="peer hidden" checked={form.rePautar === 'Tal vez'} onChange={() => updateForm({ rePautar: 'Tal vez' })} />
                 <div className="h-full flex flex-col items-center justify-center gap-4 p-6 rounded-lg bg-surface-container-low border-2 border-transparent peer-checked:border-primary peer-checked:bg-primary/5 transition-all group">
                   <div className="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:scale-110 transition-transform peer-checked:bg-primary">
                     <Meh className="text-on-surface-variant group-hover:text-primary transition-colors peer-checked:text-white" />
@@ -540,7 +638,7 @@ function Step5() {
                 </div>
               </label>
               <label className="cursor-pointer">
-                <input type="radio" name="re-pautar" className="peer hidden" />
+                <input type="radio" name="re-pautar" className="peer hidden" checked={form.rePautar === 'No'} onChange={() => updateForm({ rePautar: 'No' })} />
                 <div className="h-full flex flex-col items-center justify-center gap-4 p-6 rounded-lg bg-surface-container-low border-2 border-transparent peer-checked:border-error peer-checked:bg-error/5 transition-all group">
                   <div className="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:scale-110 transition-transform peer-checked:bg-error">
                     <Frown className="text-on-surface-variant group-hover:text-error transition-colors peer-checked:text-white" />
@@ -556,7 +654,14 @@ function Step5() {
   );
 }
 
-function Step6() {
+function Step6({ form, updateForm }: { form: FormData; updateForm: (f: Partial<FormData>) => void }) {
+  const toggleFormato = (val: string) => {
+    const arr = form.formatosFuturos.includes(val)
+      ? form.formatosFuturos.filter((v) => v !== val)
+      : [...form.formatosFuturos, val];
+    updateForm({ formatosFuturos: arr });
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
       <section className="lg:col-span-7 flex flex-col gap-6">
@@ -575,7 +680,7 @@ function Step6() {
             { icon: MoreHorizontal, label: 'Otro' },
           ].map((item, i) => (
             <label key={i} className="group relative flex items-center p-4 bg-surface-container rounded-xl cursor-pointer hover:bg-surface-container-highest transition-all duration-300 border border-transparent hover:border-primary-dim/30">
-              <input type="checkbox" className="peer hidden" />
+              <input type="checkbox" className="peer hidden" checked={form.formatosFuturos.includes(item.label)} onChange={() => toggleFormato(item.label)} />
               <div className="w-10 h-10 flex items-center justify-center bg-surface-container-low rounded-lg group-hover:bg-primary/10 transition-colors mr-4">
                 <item.icon className="text-primary-fixed w-5 h-5" />
               </div>
@@ -595,9 +700,9 @@ function Step6() {
             <h2 className="text-2xl font-bold font-headline leading-tight text-on-surface">¿Qué podríamos mejorar para brindarte una mejor experiencia?</h2>
           </div>
           <div className="relative group">
-            <textarea rows={6} placeholder="Tu opinión nos ayuda a crecer..." className="w-full bg-surface-container-lowest border-none rounded-lg p-5 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/40 transition-all custom-scrollbar resize-none"></textarea>
+            <textarea rows={6} placeholder="Tu opinión nos ayuda a crecer..." value={form.mejoras} onChange={(e) => updateForm({ mejoras: e.target.value })} className="w-full bg-surface-container-lowest border-none rounded-lg p-5 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/40 transition-all custom-scrollbar resize-none"></textarea>
             <div className="absolute bottom-4 right-4 text-outline text-[10px] font-mono opacity-50 group-focus-within:opacity-100">
-              0/500
+              {form.mejoras.length}/500
             </div>
           </div>
           <div className="flex flex-col gap-3">
@@ -617,7 +722,7 @@ function Step6() {
   );
 }
 
-function Step7() {
+function Step7({ form, updateForm }: { form: FormData; updateForm: (f: Partial<FormData>) => void }) {
   return (
     <div className="flex flex-col items-center justify-center relative overflow-hidden">
       <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-secondary-container/10 rounded-full blur-[120px] pointer-events-none"></div>
@@ -674,7 +779,7 @@ function Step7() {
               </h3>
               <div className="space-y-4">
                 <label className="group relative flex items-center p-4 rounded-xl bg-surface-container cursor-pointer hover:bg-surface-container-highest transition-all duration-200 border border-transparent hover:border-primary/30">
-                  <input type="radio" name="advisor_contact" value="yes" className="hidden peer" />
+                  <input type="radio" name="advisor_contact" value="yes" className="hidden peer" checked={form.contactoAsesor === 'Sí'} onChange={() => updateForm({ contactoAsesor: 'Sí' })} />
                   <div className="w-6 h-6 rounded-full border-2 border-outline flex items-center justify-center peer-checked:border-primary peer-checked:bg-primary transition-colors">
                     <div className="w-2 h-2 rounded-full bg-on-primary opacity-0 peer-checked:opacity-100"></div>
                   </div>
@@ -682,7 +787,7 @@ function Step7() {
                   <Rocket className="ml-auto text-primary opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5" />
                 </label>
                 <label className="group relative flex items-center p-4 rounded-xl bg-surface-container cursor-pointer hover:bg-surface-container-highest transition-all duration-200 border border-transparent hover:border-outline-variant/30">
-                  <input type="radio" name="advisor_contact" value="no" className="hidden peer" />
+                  <input type="radio" name="advisor_contact" value="no" className="hidden peer" checked={form.contactoAsesor === 'No'} onChange={() => updateForm({ contactoAsesor: 'No' })} />
                   <div className="w-6 h-6 rounded-full border-2 border-outline flex items-center justify-center peer-checked:border-outline-variant peer-checked:bg-outline-variant transition-colors">
                     <div className="w-2 h-2 rounded-full bg-white opacity-0 peer-checked:opacity-100"></div>
                   </div>
@@ -712,7 +817,21 @@ function Step7() {
   );
 }
 
-function Step8() {
+function Step8({ form, updateForm, onSubmit, submitting, submitted }: { form: FormData; updateForm: (f: Partial<FormData>) => void; onSubmit: () => void; submitting: boolean; submitted: boolean }) {
+  if (submitted) {
+    return (
+      <div className="flex items-center justify-center relative overflow-hidden min-h-[60vh]">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-[120px] -z-10"></div>
+        <div className="max-w-2xl w-full text-center space-y-6">
+          <CheckCircle className="w-20 h-20 text-[#34c759] mx-auto" />
+          <h2 className="text-4xl md:text-5xl font-headline font-extrabold text-white tracking-tight">¡Gracias!</h2>
+          <p className="text-on-surface-variant text-lg">Tu encuesta ha sido enviada exitosamente. Valoramos mucho tu opinión.</p>
+          <span className="text-primary font-headline font-black text-2xl tracking-tighter">PUBLIMOVIL LATAM</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center justify-center relative overflow-hidden min-h-[60vh]">
       <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-[120px] -z-10"></div>
@@ -742,22 +861,21 @@ function Step8() {
                 <label className="text-sm font-semibold text-on-surface-variant ml-1">Correo Electrónico</label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
-                  <input type="email" placeholder="ejemplo@correo.com" className="w-full bg-surface-container-lowest outline outline-1 outline-outline-variant/20 border-none rounded-lg py-4 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/50 transition-all" />
+                  <input type="email" placeholder="ejemplo@correo.com" value={form.email} onChange={(e) => updateForm({ email: e.target.value })} className="w-full bg-surface-container-lowest outline outline-1 outline-outline-variant/20 border-none rounded-lg py-4 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/50 transition-all" />
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-on-surface-variant ml-1">Teléfono (Opcional)</label>
                 <div className="relative">
                   <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
-                  <input type="tel" placeholder="+502 0000 0000" className="w-full bg-surface-container-lowest outline outline-1 outline-outline-variant/20 border-none rounded-lg py-4 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/50 transition-all" />
+                  <input type="tel" placeholder="+502 0000 0000" value={form.telefono} onChange={(e) => updateForm({ telefono: e.target.value })} className="w-full bg-surface-container-lowest outline outline-1 outline-outline-variant/20 border-none rounded-lg py-4 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/50 transition-all" />
                 </div>
               </div>
             </div>
             
             <div className="pt-6">
-              <button className="w-full md:w-auto bg-primary hover:bg-primary-dim text-on-primary font-bold px-10 py-5 rounded-lg shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)] transition-all active:scale-95 flex items-center justify-center gap-3">
-                Finalizar Encuesta
-                <CheckCircle className="w-5 h-5" />
+              <button type="button" onClick={onSubmit} disabled={submitting} className="w-full md:w-auto bg-primary hover:bg-primary-dim text-on-primary font-bold px-10 py-5 rounded-lg shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)] transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
+                {submitting ? (<><Loader2 className="w-5 h-5 animate-spin" /> Enviando...</>) : (<>Finalizar Encuesta <CheckCircle className="w-5 h-5" /></>)}
               </button>
               <p className="mt-4 text-xs text-outline text-center md:text-left">
                 Al finalizar, aceptas nuestra política de tratamiento de datos personales.
