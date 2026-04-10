@@ -97,14 +97,70 @@ export default function App() {
   const [form, setForm] = useState<FormData>(initialFormData);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [validationError, setValidationError] = useState('');
   const totalSteps = 8;
 
-  const updateForm = (fields: Partial<FormData>) => setForm((prev) => ({ ...prev, ...fields }));
+  const updateForm = (fields: Partial<FormData>) => {
+    setForm((prev) => ({ ...prev, ...fields }));
+    setValidationError('');
+  };
 
-  const nextStep = () => setStep((s) => Math.min(totalSteps, s + 1));
-  const prevStep = () => setStep((s) => Math.max(1, s - 1));
+  const validateStep = (s: number): string | null => {
+    switch (s) {
+      case 2:
+        if (form.tipoCampana.length === 0) return 'Selecciona al menos un tipo de campaña.';
+        if (form.nps === null) return 'Selecciona una calificación NPS.';
+        if (!form.npsPorQue.trim()) return 'Indica por qué diste esa calificación.';
+        return null;
+      case 3:
+        if (form.atencionEjecutivo === null) return 'Califica la atención del ejecutivo.';
+        if (form.tiemposRespuesta === null) return 'Califica los tiempos de respuesta.';
+        if (form.claridadInformacion === null) return 'Califica la claridad de la información.';
+        if (form.ejecucionCampana === null) return 'Califica la ejecución de la campaña.';
+        if (form.calidadFormatos === null) return 'Califica la calidad de los formatos.';
+        return null;
+      case 4:
+        if (form.efectividadCampana === null) return 'Selecciona la efectividad de la campaña.';
+        if (form.impactoMarca.length === 0) return 'Selecciona al menos un impacto percibido.';
+        return null;
+      case 5:
+        if (!form.cumplimientoPlazos) return 'Indica si se cumplieron los plazos.';
+        if (!form.dentroPresupuesto) return 'Indica si se mantuvo dentro del presupuesto.';
+        if (!form.rePautar) return 'Indica si te gustaría pautar nuevamente.';
+        return null;
+      case 6:
+        if (form.formatosFuturos.length === 0) return 'Selecciona al menos un formato.';
+        if (!form.mejoras.trim()) return 'Escribe qué podríamos mejorar.';
+        return null;
+      case 7:
+        if (!form.contactoAsesor) return 'Indica si deseas contacto de un asesor.';
+        return null;
+      default:
+        return null;
+    }
+  };
+
+  const nextStep = () => {
+    const error = validateStep(step);
+    if (error) {
+      setValidationError(error);
+      return;
+    }
+    setValidationError('');
+    if (step === 7 && form.contactoAsesor === 'No') {
+      setStep(8);
+      handleSubmit();
+      return;
+    }
+    setStep((s) => Math.min(totalSteps, s + 1));
+  };
+  const prevStep = () => { setValidationError(''); setStep((s) => Math.max(1, s - 1)); };
 
   const handleSubmit = async () => {
+    if (form.contactoAsesor === 'Sí' && !form.email.trim()) {
+      setValidationError('El correo electrónico es requerido.');
+      return;
+    }
     setSubmitting(true);
     try {
       await addDoc(collection(db, 'pbmlatam'), {
@@ -142,13 +198,13 @@ export default function App() {
               {step === 5 && <Step5 form={form} updateForm={updateForm} />}
               {step === 6 && <Step6 form={form} updateForm={updateForm} />}
               {step === 7 && <Step7 form={form} updateForm={updateForm} />}
-              {step === 8 && <Step8 form={form} updateForm={updateForm} onSubmit={handleSubmit} submitting={submitting} submitted={submitted} />}
+              {step === 8 && <Step8 form={form} updateForm={updateForm} onSubmit={handleSubmit} submitting={submitting} submitted={submitted} validationError={validationError} />}
             </motion.div>
           </AnimatePresence>
         </div>
       </main>
 
-      {step > 1 && step < 8 && <BottomBar step={step} onNext={nextStep} onPrev={prevStep} />}
+      {step > 1 && step < 8 && !submitted && <BottomBar step={step} onNext={nextStep} onPrev={prevStep} validationError={validationError} />}
     </div>
   );
 }
@@ -187,10 +243,17 @@ function TopBar({ step }: { step: number }) {
   );
 }
 
-function BottomBar({ step, onNext, onPrev }: { step: number, onNext: () => void, onPrev: () => void }) {
+function BottomBar({ step, onNext, onPrev, validationError }: { step: number, onNext: () => void, onPrev: () => void, validationError: string }) {
   return (
     <div className="fixed bottom-0 left-0 w-full z-50 pointer-events-none">
       <div className="absolute inset-0 bg-gradient-to-t from-[#0c0e15] via-[#0c0e15]/90 to-transparent -z-10 h-32 bottom-0 top-auto"></div>
+      {validationError && (
+        <div className="pointer-events-auto max-w-4xl mx-auto mb-2 px-6">
+          <div className="bg-error/15 border border-error/30 text-error rounded-xl px-4 py-3 text-sm font-medium text-center">
+            {validationError}
+          </div>
+        </div>
+      )}
       <nav className="bg-[#11131b]/80 backdrop-blur-xl border-t border-white/5 shadow-2xl flex justify-between items-center px-6 md:px-8 py-4 md:py-5 pointer-events-auto max-w-4xl mx-auto rounded-t-2xl">
         <button 
           onClick={onPrev}
@@ -491,12 +554,70 @@ function Step4({ form, updateForm }: { form: FormData; updateForm: (f: Partial<F
           </div>
           
           <div className="mt-8 md:mt-12 group">
-            <div className="relative w-full h-12 md:h-16 flex items-center">
-              <div className="absolute w-full h-2 bg-surface-container-low rounded-full"></div>
-              <div className="absolute h-2 bg-gradient-to-r from-primary-dim to-primary rounded-full" style={{ width: `${((form.efectividadCampana ?? 0) / 10) * 100}%` }}></div>
-              <div className="absolute w-full flex justify-between px-1">
+            <style>{`
+              input[type="range"].efectividad-slider {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 100%;
+                height: 8px;
+                border-radius: 9999px;
+                outline: none;
+                cursor: pointer;
+                background: linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) var(--slider-progress), var(--color-surface-container-low, #1a1c25) var(--slider-progress), var(--color-surface-container-low, #1a1c25) 100%);
+              }
+              input[type="range"].efectividad-slider::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                background: var(--color-primary);
+                border: 4px solid var(--color-surface-container, #1e2029);
+                box-shadow: 0 0 12px rgba(240,90,34,0.4);
+                cursor: grab;
+                transition: box-shadow 0.2s, transform 0.2s;
+              }
+              input[type="range"].efectividad-slider::-webkit-slider-thumb:hover {
+                transform: scale(1.15);
+                box-shadow: 0 0 20px rgba(240,90,34,0.6);
+              }
+              input[type="range"].efectividad-slider::-webkit-slider-thumb:active {
+                cursor: grabbing;
+                transform: scale(1.2);
+              }
+              input[type="range"].efectividad-slider::-moz-range-thumb {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                background: var(--color-primary);
+                border: 4px solid var(--color-surface-container, #1e2029);
+                box-shadow: 0 0 12px rgba(240,90,34,0.4);
+                cursor: grab;
+              }
+              input[type="range"].efectividad-slider::-moz-range-track {
+                height: 8px;
+                border-radius: 9999px;
+                background: var(--color-surface-container-low, #1a1c25);
+              }
+              input[type="range"].efectividad-slider::-moz-range-progress {
+                height: 8px;
+                border-radius: 9999px;
+                background: var(--color-primary);
+              }
+            `}</style>
+            <div className="relative w-full px-1">
+              <input
+                type="range"
+                min={1}
+                max={10}
+                step={1}
+                value={form.efectividadCampana ?? 1}
+                onChange={(e) => updateForm({ efectividadCampana: Number(e.target.value) })}
+                className="efectividad-slider w-full"
+                style={{ '--slider-progress': `${(((form.efectividadCampana ?? 1) - 1) / 9) * 100}%` } as React.CSSProperties}
+              />
+              <div className="flex justify-between mt-1 px-0.5">
                 {[...Array(10)].map((_, i) => (
-                  <button key={i} type="button" onClick={() => updateForm({ efectividadCampana: i + 1 })} className={`w-1 h-3 md:h-4 rounded-full cursor-pointer ${(i + 1) === form.efectividadCampana ? 'bg-primary ring-4 ring-primary/20 scale-125' : 'bg-outline-variant/30 hover:bg-primary/50'}`}></button>
+                  <span key={i} className={`text-[10px] font-bold ${(i + 1) === form.efectividadCampana ? 'text-primary' : 'text-outline/40'}`}>{i + 1}</span>
                 ))}
               </div>
             </div>
@@ -810,7 +931,7 @@ function Step7({ form, updateForm }: { form: FormData; updateForm: (f: Partial<F
   );
 }
 
-function Step8({ form, updateForm, onSubmit, submitting, submitted }: { form: FormData; updateForm: (f: Partial<FormData>) => void; onSubmit: () => void; submitting: boolean; submitted: boolean }) {
+function Step8({ form, updateForm, onSubmit, submitting, submitted, validationError }: { form: FormData; updateForm: (f: Partial<FormData>) => void; onSubmit: () => void; submitting: boolean; submitted: boolean; validationError: string }) {
   if (submitted) {
     return (
       <div className="flex items-center justify-center relative overflow-hidden min-h-[60vh]">
@@ -851,10 +972,10 @@ function Step8({ form, updateForm, onSubmit, submitting, submitted }: { form: Fo
             
             <div className="grid grid-cols-1 gap-6 pt-4">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-on-surface-variant ml-1">Correo Electrónico</label>
+                <label className="text-sm font-semibold text-on-surface-variant ml-1">Correo Electrónico <span className="text-error text-xs">*</span></label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-outline w-5 h-5" />
-                  <input type="email" placeholder="ejemplo@correo.com" value={form.email} onChange={(e) => updateForm({ email: e.target.value })} className="w-full bg-surface-container-lowest outline outline-1 outline-outline-variant/20 border-none rounded-lg py-4 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/50 transition-all" />
+                  <input type="email" required placeholder="ejemplo@correo.com" value={form.email} onChange={(e) => updateForm({ email: e.target.value })} className="w-full bg-surface-container-lowest outline outline-1 outline-outline-variant/20 border-none rounded-lg py-4 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/50 transition-all" />
                 </div>
               </div>
               <div className="space-y-2">
@@ -873,6 +994,11 @@ function Step8({ form, updateForm, onSubmit, submitting, submitted }: { form: Fo
               <p className="mt-4 text-xs text-outline text-center md:text-left">
                 Al finalizar, aceptas nuestra política de tratamiento de datos personales.
               </p>
+              {validationError && (
+                <div className="mt-4 bg-error/15 border border-error/30 text-error rounded-xl px-4 py-3 text-sm font-medium text-center">
+                  {validationError}
+                </div>
+              )}
             </div>
           </div>
           
