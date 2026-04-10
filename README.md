@@ -7,7 +7,6 @@
 A custom web application developed by **Santiago Abrego**.
 
 This project was designed and built by Santiago Abrego.  
-It is **not** an auto-generated Google AI Studio project.
 
 ## Developed by
 **Santiago Abrego**
