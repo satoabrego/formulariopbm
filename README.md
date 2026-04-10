@@ -1,20 +1,27 @@
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+  <img width="1200" height="475" alt="Project Banner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# Formulario PBM
 
-This contains everything you need to run your app locally.
+A custom web application developed by **Santiago Abrego**.
 
-View your app in AI Studio: https://ai.studio/apps/8e74ddf8-e8cc-4f72-b1e4-9ca7ffc4f679
+This project was designed and built by Santiago Abrego.  
+It is **not** an auto-generated Google AI Studio project.
 
-## Run Locally
+## Developed by
+**Santiago Abrego**
 
-**Prerequisites:**  Node.js
+## Project overview
+Formulario PBM is a web application created to support form-based workflows with a clean and functional user experience.
 
+## Run locally
 
+### Prerequisites
+- Node.js
+- npm
+
+### Installation
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+   ```bash
+   npm install
