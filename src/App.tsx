@@ -650,12 +650,12 @@ function Step4({ form, updateForm }: { form: FormData; updateForm: (f: Partial<F
         </div>
       </div>
 
-      <div className="relative w-full h-48 rounded-lg overflow-hidden bg-surface-container group">
-        <img alt="Marketing team reviewing data" className="w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFBaxSGM9PlnpDvz68knxObtyxr8NgY2_G5cn30h6rCacHLivaO5yCoeVTvri3G9ZEMzZrukVNXcgwypJgkqy9IxTJUitSA9Lp-XWcazIPyxjRLZq_6amPyj_nFGfPldjf44WDUKTh_RnEBIJGUeWInLrw-328uoJBHW8UJ_c1XdDSp_BNCNTdgtdGZMxgYeBNu1X522jqa7uCx7qKbER7gXYyP_ePooQ2HNxww5sLOFqGaSD8zZ4ADQcA9DF14kXMY2dO5H5Ojjb4" />
-        <div className="absolute inset-0 flex flex-col justify-center items-center text-center p-6 bg-gradient-to-t from-background to-transparent">
+      <div className="relative w-full h-auto rounded-lg overflow-hidden bg-surface-container group">
+        <img alt="Marketing team reviewing data" className="w-full h-full object-cover opacity-70 group-hover:opacity-40 transition-opacity" src="/images/banner.png" />
+{/*         <div className="absolute inset-0 flex flex-col justify-center items-center text-center p-6 bg-gradient-to-t from-background to-transparent">
           <span className="text-primary font-headline font-black text-2xl tracking-tighter">PUBLIMOVIL LATAM</span>
           <p className="text-on-surface-variant font-label text-sm mt-1 uppercase tracking-widest">Connect. Engage. Grow.</p>
-        </div>
+        </div> */}
       </div>
     </div>
   );
